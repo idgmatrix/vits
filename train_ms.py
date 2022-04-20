@@ -36,7 +36,7 @@ from text.symbols import symbols
 
 torch.backends.cudnn.benchmark = True
 global_step = 0
-
+pretrained = False
 
 def main():
   """Assume Single Node Multi GPUs Training Only"""
@@ -52,6 +52,8 @@ def main():
 
 def run(rank, n_gpus, hps):
   global global_step
+  global pretrained
+
   if rank == 0:
     logger = utils.get_logger(hps.model_dir)
     logger.info(hps)
@@ -62,6 +64,11 @@ def run(rank, n_gpus, hps):
   dist.init_process_group(backend='nccl', init_method='env://', world_size=n_gpus, rank=rank)
   torch.manual_seed(hps.train.seed)
   torch.cuda.set_device(rank)
+
+  print('batch_size =', hps.train.batch_size)
+  if pretrained == True:
+    hps.train.batch_size = 64
+    print('batch_size =', hps.train.batch_size)
 
   train_dataset = TextAudioSpeakerLoader(hps.data.training_files, hps.data)
   train_sampler = DistributedBucketSampler(
@@ -104,6 +111,7 @@ def run(rank, n_gpus, hps):
     _, _, _, epoch_str = utils.load_checkpoint(utils.latest_checkpoint_path(hps.model_dir, "G_*.pth"), net_g, optim_g)
     _, _, _, epoch_str = utils.load_checkpoint(utils.latest_checkpoint_path(hps.model_dir, "D_*.pth"), net_d, optim_d)
     global_step = (epoch_str - 1) * len(train_loader)
+    pretrained = True
   except:
     epoch_str = 1
     global_step = 0

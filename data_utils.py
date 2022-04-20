@@ -182,6 +182,9 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
         # Store spectrogram lengths for Bucketing
         # wav_length ~= file_size / (wav_channels * Bytes per dim) = file_size / (1 * 2)
         # spec_length = wav_length // hop_length
+        for ii in range(0, len(self.audiopaths_sid_text)):
+            if 3 < len(self.audiopaths_sid_text[ii]):
+                print(self.audiopaths_sid_text[ii])
 
         audiopaths_sid_text_new = []
         lengths = []
